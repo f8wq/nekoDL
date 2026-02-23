@@ -15,12 +15,6 @@ Simple desktop app to download catgirl images from `nekos.moe`.
   - existing files in target folder
 - Stores download history in `.nekodl_manifest.json` inside your target folder.
 
-## Run
-
-```powershell
-python app.py
-```
-
 ## Notes
 - Uses `https://nekos.moe/api/v1/random/image` for discovery.
 - Downloads image content from `https://nekos.moe/image/{id}`.
