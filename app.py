@@ -8,7 +8,18 @@ import urllib.request
 import ctypes
 import sys
 import webbrowser
-from tkinter import Tk, StringVar, Text, END, DISABLED, NORMAL, PhotoImage, filedialog, messagebox
+from tkinter import (
+    Tk,
+    StringVar,
+    BooleanVar,
+    Text,
+    END,
+    DISABLED,
+    NORMAL,
+    PhotoImage,
+    filedialog,
+    messagebox,
+)
 from tkinter import ttk
 
 API_RANDOM = "https://nekos.moe/api/v1/random/image"
@@ -19,6 +30,32 @@ DEFAULT_ICON_NAME = "app.ico"
 ASSETS_DIR = "assets"
 GITHUB_URL = "https://github.com/f8wq"
 DISCORD_URL = "https://discord.com/users/1000408727784018032"
+LIGHT_THEME = {
+    "bg": "#f2f3f5",
+    "panel_bg": "#f2f3f5",
+    "text": "#1e1f22",
+    "muted_text": "#2b2d31",
+    "entry_bg": "#ffffff",
+    "button_bg": "#e7e8ea",
+    "button_active": "#d9dbdf",
+    "accent": "#3b82f6",
+    "accent_text": "#ffffff",
+    "log_bg": "#ffffff",
+    "log_fg": "#1e1f22",
+}
+DARK_THEME = {
+    "bg": "#121418",
+    "panel_bg": "#121418",
+    "text": "#eceff4",
+    "muted_text": "#d8dee9",
+    "entry_bg": "#1b1f27",
+    "button_bg": "#252a34",
+    "button_active": "#323a49",
+    "accent": "#4f8cff",
+    "accent_text": "#ffffff",
+    "log_bg": "#0f131a",
+    "log_fg": "#e5e9f0",
+}
 
 
 def resource_path(*parts: str) -> str:
@@ -122,12 +159,15 @@ class NekoDLApp:
         self.amount_var = StringVar(value="10")
         self.mode_var = StringVar(value="mixed")
         self.path_var = StringVar(value=os.path.join(os.getcwd(), "downloads"))
+        self.dark_mode_var = BooleanVar(value=True)
 
         self.log_queue = queue.Queue()
         self.github_logo = None
         self.discord_logo = None
+        self.style = ttk.Style(self.root)
 
         self._build_ui()
+        self._apply_theme()
         self.root.after(100, self._drain_log_queue)
 
     def _build_ui(self):
@@ -146,6 +186,12 @@ class NekoDLApp:
         self._make_link_button(links_row, "Discord", DISCORD_URL, self.discord_logo).grid(
             row=0, column=1
         )
+        ttk.Checkbutton(
+            links_row,
+            text="Dark mode",
+            variable=self.dark_mode_var,
+            command=self._apply_theme,
+        ).grid(row=0, column=2, padx=(12, 0))
 
         ttk.Label(frame, text="Amount:").grid(row=1, column=0, sticky="w", padx=(0, 8), pady=(0, 8))
         self.amount_entry = ttk.Entry(frame, textvariable=self.amount_var, width=12)
@@ -199,6 +245,62 @@ class NekoDLApp:
         button = ttk.Button(parent, **kwargs)
         button.configure(cursor="hand2")
         return button
+
+    def _apply_theme(self):
+        theme = DARK_THEME if self.dark_mode_var.get() else LIGHT_THEME
+        self.style.theme_use("clam")
+
+        self.root.configure(bg=theme["bg"])
+        self.style.configure("TFrame", background=theme["panel_bg"])
+        self.style.configure("TLabel", background=theme["panel_bg"], foreground=theme["text"])
+        self.style.configure(
+            "TButton",
+            background=theme["button_bg"],
+            foreground=theme["text"],
+            borderwidth=0,
+            focusthickness=1,
+            focuscolor=theme["accent"],
+            padding=(10, 6),
+        )
+        self.style.map("TButton", background=[("active", theme["button_active"])])
+        self.style.configure(
+            "TCheckbutton",
+            background=theme["panel_bg"],
+            foreground=theme["muted_text"],
+        )
+        self.style.map("TCheckbutton", foreground=[("active", theme["text"])])
+        self.style.configure(
+            "TEntry",
+            fieldbackground=theme["entry_bg"],
+            foreground=theme["text"],
+        )
+        self.style.configure(
+            "TCombobox",
+            fieldbackground=theme["entry_bg"],
+            background=theme["entry_bg"],
+            foreground=theme["text"],
+            arrowcolor=theme["text"],
+        )
+        self.style.map(
+            "TCombobox",
+            fieldbackground=[("readonly", theme["entry_bg"])],
+            foreground=[("readonly", theme["text"])],
+            selectbackground=[("readonly", theme["accent"])],
+            selectforeground=[("readonly", theme["accent_text"])],
+        )
+
+        if hasattr(self, "log"):
+            self.log.config(
+                bg=theme["log_bg"],
+                fg=theme["log_fg"],
+                insertbackground=theme["log_fg"],
+                selectbackground=theme["accent"],
+                selectforeground=theme["accent_text"],
+                relief="flat",
+                highlightthickness=1,
+                highlightbackground=theme["button_bg"],
+                highlightcolor=theme["accent"],
+            )
 
     def _choose_path(self):
         folder = filedialog.askdirectory(initialdir=self.path_var.get() or os.getcwd())

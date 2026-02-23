@@ -9,6 +9,7 @@ Simple desktop app to download catgirl images from `nekos.moe`.
   - `only nsfw`
   - `only sfw`
 - Pick a target folder.
+- Toggle dark mode on/off from the top bar.
 - Duplicate prevention using:
   - image IDs
   - original hashes (when available)
